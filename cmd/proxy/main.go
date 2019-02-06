@@ -26,6 +26,7 @@ func main() {
 	span := tracer.StartSpan("proxy start")
 	span.SetTag("hello-to", helloTo)
 	span.SetTag("request-id", "abcd")
+	span.SetBaggageItem("mybaggage", "abcd")
 	defer span.Finish()
 
 	ctx := opentracing.ContextWithSpan(context.Background(), span)
@@ -72,8 +73,11 @@ func formatString(ctx context.Context, helloTo string) string {
 		opentracing.HTTPHeadersCarrier(tempHeader),
 	)
 
+	for k, v := range tempHeader {
+		fmt.Printf("tempHeader: %s,%v\n", k, v)
+	}
+
 	traceInfo := tempHeader["Uber-Trace-Id"][0]
-	fmt.Printf(tempHeader["Uber-Trace-Id"][0])
 
 	resp, err := request.
 		GET(url).

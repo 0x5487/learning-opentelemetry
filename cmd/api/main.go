@@ -20,6 +20,13 @@ func main() {
 		span := tracer.StartSpan("format", ext.RPCServerOption(spanCtx))
 		defer span.Finish()
 
+		baggage := span.BaggageItem("mybaggage")
+		if baggage == "" {
+			fmt.Println("baggage is empty")
+		} else {
+			fmt.Printf("baggage: %s", baggage)
+		}
+
 		helloTo := r.FormValue("helloTo")
 		helloStr := fmt.Sprintf("Hello, %s!", helloTo)
 		span.LogFields(
