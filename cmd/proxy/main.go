@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"net/url"
 
@@ -23,21 +24,32 @@ func main() {
 
 	helloTo := "google"
 
-	span := tracer.StartSpan("proxy start")
+	span := tracer.StartSpan("begin")
 	span.SetTag("hello-to", helloTo)
 	span.SetTag("request-id", "abcd")
 	span.SetBaggageItem("mybaggage", "abcd")
-	defer span.Finish()
 
 	ctx := opentracing.ContextWithSpan(context.Background(), span)
 
 	helloStr := formatString(ctx, helloTo)
 	printHello(ctx, helloStr)
+
+	// simulate that send a message to mq
+	ext.SpanKindProducer.Set(span)
+	textMap := map[string]string{}
+	span.Tracer().Inject(
+		span.Context(),
+		opentracing.TextMap,
+		opentracing.TextMapCarrier(textMap),
+	)
+	span.Finish()
+	sendToMQ(textMap)
 }
 
 // Init returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
 func Init(service string) (opentracing.Tracer, io.Closer) {
 	cfg := &config.Configuration{
+		ServiceName: service,
 		Sampler: &config.SamplerConfig{
 			Type:  "const",
 			Param: 1,
@@ -104,4 +116,21 @@ func printHello(ctx context.Context, helloStr string) {
 
 	println(helloStr)
 	span.LogKV("event", "println")
+}
+
+func sendToMQ(textMapCarrier opentracing.TextMapCarrier) {
+	time.Sleep(1 * time.Second)
+	tracer, closer := Init("mq") // tracer app name
+	defer closer.Close()
+	opentracing.SetGlobalTracer(tracer)
+
+	spanCtx, _ := tracer.Extract(opentracing.TextMap, textMapCarrier)
+	span := tracer.StartSpan("mq-start", ext.RPCServerOption(spanCtx))
+	ext.SpanKindConsumer.Set(span)
+	defer span.Finish()
+
+	mqStr := "Hello MQ"
+	time.Sleep(1 * time.Second)
+	println(mqStr)
+	span.LogKV("event", "send-to-mq")
 }
