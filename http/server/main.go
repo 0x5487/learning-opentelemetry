@@ -5,13 +5,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
 	"go.opentelemetry.io/otel/api/correlation"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/instrumentation/httptrace"
+	"go.opentelemetry.io/otel/label"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -22,8 +23,8 @@ func initTracer() func() {
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "http-server",
-			Tags: []kv.KeyValue{
-				kv.String("version", "1.0"),
+			Tags: []label.KeyValue{
+				label.String("version", "1.0"),
 			},
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
@@ -64,7 +65,9 @@ func helloHandler(w http.ResponseWriter, req *http.Request) {
 	)
 	defer span.End()
 
-	span.AddEvent(ctx, "handling this...", kv.Int("request-handled", 100))
+	time.Sleep(1 * time.Second)
+
+	span.AddEvent(ctx, "handling this...", label.Int("request-handled", 100))
 
 	_, _ = io.WriteString(w, "Hello, world!\n")
 	fmt.Println("hello is called")

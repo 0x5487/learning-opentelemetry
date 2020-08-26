@@ -22,10 +22,11 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/kv"
+
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/label"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"google.golang.org/grpc/codes"
 )
 
 // initTracer creates a new trace provider instance and registers it as global trace provider.
@@ -35,9 +36,9 @@ func initTracer() func() {
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "trace-demo",
-			Tags: []kv.KeyValue{
-				kv.String("exporter", "jaeger"),
-				kv.Float64("float", 312.23),
+			Tags: []label.KeyValue{
+				label.String("exporter", "jaeger"),
+				label.Float64("float", 312.23),
 			},
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
@@ -60,7 +61,7 @@ func main() {
 	tr := global.Tracer("component-main")
 	ctx, span := tr.Start(ctx, "foo")
 	span.SetAttribute("request_id", "abc")
-	span.AddEvent(ctx, "myEvent", kv.String("aa", "value_aa"))
+	span.AddEvent(ctx, "myEvent", label.String("aa", "value_aa"))
 	span.SetStatus(codes.OK, "")
 
 	time.Sleep(600 * time.Millisecond)

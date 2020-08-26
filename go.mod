@@ -3,12 +3,16 @@ module github.com/jasonsoft/learning-opentelemetry
 go 1.15
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.4.2
-	github.com/jasonsoft/log/v2 v2.0.0-beta.3
-	go.opentelemetry.io/otel v0.10.0
-	go.opentelemetry.io/otel/exporters/trace/jaeger v0.10.0
-	go.opentelemetry.io/otel/sdk v0.10.0
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
-	google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215 // indirect
+	github.com/jasonsoft/log/v2 v2.0.0-beta.4
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc v0.11.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace v0.11.0
+	go.opentelemetry.io/otel v0.11.0
+	go.opentelemetry.io/otel/exporters/trace/jaeger v0.11.0
+	go.opentelemetry.io/otel/sdk v0.11.0
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.31.0
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

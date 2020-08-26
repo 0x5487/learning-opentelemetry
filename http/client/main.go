@@ -8,14 +8,13 @@ import (
 
 	"net/http"
 
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel/codes"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/instrumentation/httptrace"
 
-	"go.opentelemetry.io/otel/api/kv"
-	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/label"
 
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
@@ -27,8 +26,8 @@ func initTracer() func() {
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "http-client",
-			Tags: []kv.KeyValue{
-				kv.String("version", "1.0"),
+			Tags: []label.KeyValue{
+				label.String("version", "1.0"),
 			},
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
@@ -53,26 +52,21 @@ func main() {
 
 	ctx := context.Background()
 	tracer := global.Tracer("http-client")
-	err := tracer.WithSpan(ctx, "client http hello demo",
-		func(ctx context.Context) error {
-			req, _ := http.NewRequest("GET", "http://localhost:7777/hello", nil)
 
-			//ctx, req = httptrace.W3C(ctx, req)
-			httptrace.Inject(ctx, req)
-			res, err := client.Do(req)
-			if err != nil {
-				panic(err)
-			}
-			_, err = ioutil.ReadAll(res.Body)
-			_ = res.Body.Close()
-			span := trace.SpanFromContext(ctx)
-			span.SetAttribute("request_id", "abc")
-			span.SetStatus(codes.OK, "OK")
-			return err
-		})
+	ctx, span := tracer.Start(ctx, "client http hello demo")
+	defer span.End()
 
+	req, _ := http.NewRequest("GET", "http://localhost:7777/hello", nil)
+	httptrace.Inject(ctx, req)
+	res, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Second * 3)
+	_, err = ioutil.ReadAll(res.Body)
+	_ = res.Body.Close()
+
+	span.SetAttribute("request_id", "abc")
+	span.SetStatus(codes.OK, "OK")
+
+	time.Sleep(time.Second * 2)
 }
