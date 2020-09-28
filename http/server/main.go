@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
-	"go.opentelemetry.io/otel/api/correlation"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	"go.opentelemetry.io/otel/api/baggage"
 	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
@@ -44,7 +44,7 @@ func helloHandler(w http.ResponseWriter, req *http.Request) {
 	// Extracts the conventional HTTP span attributes,
 	// distributed context tags, and a span context for
 	// tracing this request.
-	attrs, entries, spanCtx := httptrace.Extract(req.Context(), req)
+	attrs, entries, spanCtx := otelhttptrace.Extract(req.Context(), req)
 	ctx := req.Context()
 	if spanCtx.IsValid() {
 		ctx = trace.ContextWithRemoteSpanContext(ctx, spanCtx)
@@ -52,7 +52,7 @@ func helloHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Apply the correlation context tags to the request
 	// context.
-	req = req.WithContext(correlation.ContextWithMap(ctx, correlation.NewMap(correlation.MapUpdate{
+	req = req.WithContext(baggage.ContextWithMap(ctx, baggage.NewMap(baggage.MapUpdate{
 		MultiKV: entries,
 	})))
 

@@ -7,7 +7,7 @@ import (
 	helloworldProto "github.com/jasonsoft/learning-opentelemetry/grpc/proto"
 	"github.com/jasonsoft/log/v2"
 	"github.com/jasonsoft/log/v2/handlers/console"
-	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc"
+	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"

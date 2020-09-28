@@ -8,9 +8,9 @@ import (
 
 	"net/http"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/otel/codes"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
 	"go.opentelemetry.io/otel/api/global"
 
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
@@ -57,7 +57,7 @@ func main() {
 	defer span.End()
 
 	req, _ := http.NewRequest("GET", "http://localhost:7777/hello", nil)
-	httptrace.Inject(ctx, req)
+	otelhttptrace.Inject(ctx, req)
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err)
