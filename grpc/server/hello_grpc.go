@@ -28,7 +28,7 @@ func (s *Server) SayHello(ctx context.Context, in *proto.HelloRequest) (*proto.H
 		return nil, grpc.Errorf(codes.Internal, "no metadata")
 	}
 
-	tracer := global.Tracer("")
+	tracer := global.TracerProvider().Tracer("go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc")
 
 	_, spanCtx := grpctrace.Extract(ctx, &md)
 
@@ -37,7 +37,10 @@ func (s *Server) SayHello(ctx context.Context, in *proto.HelloRequest) (*proto.H
 	// }))
 
 	if spanCtx.IsValid() {
+		log.Debug("span is valid")
 		ctx = trace.ContextWithRemoteSpanContext(ctx, spanCtx)
+	} else {
+		log.Debug("span is invalid")
 	}
 
 	// Start the server-side span, passing the remote
