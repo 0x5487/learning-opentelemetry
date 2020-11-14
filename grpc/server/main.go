@@ -8,7 +8,6 @@ import (
 	"github.com/jasonsoft/log/v2"
 	"github.com/jasonsoft/log/v2/handlers/console"
 	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -50,8 +49,6 @@ func main() {
 	fn := initTracer()
 	defer fn()
 
-	tracer := global.Tracer("server-tracer")
-
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -70,8 +67,8 @@ func main() {
 				PermitWithoutStream: true,                             // Allow pings even when there are no active streams
 			},
 		),
-		grpc.UnaryInterceptor(grpctrace.UnaryServerInterceptor(tracer)),
-		grpc.StreamInterceptor(grpctrace.StreamServerInterceptor(tracer)),
+		grpc.UnaryInterceptor(grpctrace.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(grpctrace.StreamServerInterceptor()),
 	)
 
 	server := NewServer()

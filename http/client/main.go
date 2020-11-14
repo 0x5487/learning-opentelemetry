@@ -65,8 +65,12 @@ func main() {
 	_, err = ioutil.ReadAll(res.Body)
 	_ = res.Body.Close()
 
-	span.SetAttribute("request_id", "abc")
-	span.SetStatus(codes.OK, "OK")
+	label1 := label.KeyValue{
+		Key:   label.Key("request_id"),
+		Value: label.StringValue("abc"),
+	}
+	span.SetAttributes(label1)
+	span.SetStatus(codes.Ok, "OK")
 
 	time.Sleep(time.Second * 2)
 }

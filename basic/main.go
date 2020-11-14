@@ -60,9 +60,19 @@ func main() {
 
 	tr := global.Tracer("component-main")
 	ctx, span := tr.Start(ctx, "foo")
-	span.SetAttribute("request_id", "abc")
-	span.AddEvent(ctx, "myEvent", label.String("aa", "value_aa"))
-	span.SetStatus(codes.OK, "")
+
+	label1 := label.KeyValue{
+		Key:   label.Key("request_id"),
+		Value: label.StringValue("abc"),
+	}
+	span.SetAttributes(label1)
+
+	label2 := label.KeyValue{
+		Key:   label.Key("aa"),
+		Value: label.StringValue("value_aa"),
+	}
+	span.AddEvent(ctx, "myEvent", label2)
+	span.SetStatus(codes.Ok, "")
 
 	time.Sleep(600 * time.Millisecond)
 

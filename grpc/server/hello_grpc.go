@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/jasonsoft/learning-opentelemetry/grpc/proto"
-	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"go.opentelemetry.io/otel/api/baggage"
+	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/api/trace"
 	"google.golang.org/grpc"
@@ -31,11 +30,11 @@ func (s *Server) SayHello(ctx context.Context, in *proto.HelloRequest) (*proto.H
 
 	tracer := global.Tracer("")
 
-	entries, spanCtx := grpctrace.Extract(ctx, &md)
+	_, spanCtx := grpctrace.Extract(ctx, &md)
 
-	ctx = baggage.ContextWithMap(ctx, baggage.NewMap(baggage.MapUpdate{
-		MultiKV: entries,
-	}))
+	// ctx = baggage.ContextWithMap(ctx, baggage.NewMap(baggage.MapUpdate{
+	// 	MultiKV: entries,
+	// }))
 
 	if spanCtx.IsValid() {
 		ctx = trace.ContextWithRemoteSpanContext(ctx, spanCtx)

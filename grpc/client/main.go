@@ -4,7 +4,6 @@ import (
 	"context"
 
 	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
 	"google.golang.org/grpc"
@@ -49,7 +48,7 @@ func main() {
 	fn := initTracer()
 	defer fn()
 
-	tracer := global.Tracer("client-tracer")
+	//tracer := global.Tracer("client-tracer")
 
 	conn, err := grpc.Dial(address,
 		grpc.WithInsecure(),
@@ -58,8 +57,8 @@ func main() {
 			Timeout:             5,    // wait 5 second for ping ack before considering the connection dead
 			PermitWithoutStream: true, // send pings even without active streams
 		}),
-		grpc.WithUnaryInterceptor(grpctrace.UnaryClientInterceptor(tracer)),
-		grpc.WithStreamInterceptor(grpctrace.StreamClientInterceptor(tracer)),
+		grpc.WithUnaryInterceptor(grpctrace.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(grpctrace.StreamClientInterceptor()),
 	)
 
 	if err != nil {
