@@ -21,12 +21,12 @@ import (
 	"log"
 	"time"
 
-	"go.opentelemetry.io/otel/api/global"
-
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // initTracer creates a new trace provider instance and registers it as global trace provider.
@@ -58,7 +58,7 @@ func main() {
 
 	ctx := context.Background()
 
-	tr := global.Tracer("component-main")
+	tr := otel.Tracer("component-main")
 	ctx, span := tr.Start(ctx, "foo")
 
 	label1 := label.KeyValue{
@@ -68,10 +68,13 @@ func main() {
 	span.SetAttributes(label1)
 
 	label2 := label.KeyValue{
-		Key:   label.Key("aa"),
+		Key:   label.Key("key_aa"),
 		Value: label.StringValue("value_aa"),
 	}
-	span.AddEvent(ctx, "myEvent", label2)
+	evt := trace.WithAttributes(label2)
+
+	span.AddEvent("myEvent", evt)
+
 	span.SetStatus(codes.Ok, "")
 
 	time.Sleep(600 * time.Millisecond)
@@ -83,7 +86,7 @@ func main() {
 }
 
 func bar(ctx context.Context) {
-	tr := global.Tracer("component-bar")
+	tr := otel.Tracer("component-bar")
 	_, span := tr.Start(ctx, "bar")
 	defer span.End()
 

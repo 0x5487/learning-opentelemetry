@@ -7,9 +7,11 @@ import (
 	helloworldProto "github.com/jasonsoft/learning-opentelemetry/grpc/proto"
 	"github.com/jasonsoft/log/v2"
 	"github.com/jasonsoft/log/v2/handlers/console"
-	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -35,7 +37,7 @@ func initTracer() func() {
 	if err != nil {
 		panic(err)
 	}
-
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	return func() {
 		flush()
 	}
@@ -67,8 +69,8 @@ func main() {
 				PermitWithoutStream: true,                             // Allow pings even when there are no active streams
 			},
 		),
-		grpc.UnaryInterceptor(grpctrace.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(grpctrace.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
 	server := NewServer()

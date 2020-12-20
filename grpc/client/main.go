@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 
-	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
@@ -35,7 +37,7 @@ func initTracer() func() {
 	if err != nil {
 		panic(err)
 	}
-
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	return func() {
 		flush()
 	}
@@ -57,8 +59,8 @@ func main() {
 			Timeout:             5,    // wait 5 second for ping ack before considering the connection dead
 			PermitWithoutStream: true, // send pings even without active streams
 		}),
-		grpc.WithUnaryInterceptor(grpctrace.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(grpctrace.StreamClientInterceptor()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
 
 	if err != nil {

@@ -8,10 +8,13 @@ import (
 
 	"net/http"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
-
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/semconv"
+	"go.opentelemetry.io/otel/trace"
 
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/label"
@@ -36,6 +39,7 @@ func initTracer() func() {
 		log.Fatal(err)
 	}
 
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	return func() {
 		flush()
 	}
@@ -45,19 +49,19 @@ func main() {
 	fn := initTracer()
 	defer fn()
 
-	client := http.DefaultClient
-	// ctx := correlation.NewContext(context.Background(),
-	// 	kv.String("username", "donuts"),
-	// )
+	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
-	ctx := context.Background()
-	tracer := global.Tracer("http-client")
+	ctx := baggage.ContextWithValues(context.Background(),
+		label.String("username", "donuts"),
+	)
 
-	ctx, span := tracer.Start(ctx, "client http hello demo")
+	tr := otel.Tracer("example/client")
+
+	ctx, span := tr.Start(ctx, "client http hello demo", trace.WithAttributes(semconv.PeerServiceKey.String("ExampleService")))
 	defer span.End()
 
-	req, _ := http.NewRequest("GET", "http://localhost:7777/hello", nil)
-	otelhttptrace.Inject(ctx, req)
+	req, _ := http.NewRequestWithContext(ctx, "GET", "http://localhost:7777/hello", nil)
+
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err)

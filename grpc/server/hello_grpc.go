@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/jasonsoft/learning-opentelemetry/grpc/proto"
-
-	grpctrace "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/trace"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/jasonsoft/log/v2"
 )
@@ -23,35 +19,39 @@ func NewServer() *Server {
 
 // SayHello implements helloworld.GreeterServer
 func (s *Server) SayHello(ctx context.Context, in *proto.HelloRequest) (*proto.HelloReply, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "no metadata")
-	}
+	log.Debug("== begin sayHello ==")
+	// md, ok := metadata.FromIncomingContext(ctx)
+	// if !ok {
+	// 	return nil, grpc.Errorf(codes.Internal, "no metadata")
+	// }
 
-	tracer := global.TracerProvider().Tracer("go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc")
+	// tracer := otel.TracerProvider().Tracer("go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc")
 
-	_, spanCtx := grpctrace.Extract(ctx, &md)
+	// _, spanCtx := grpctrace.Extract(ctx, &md)
 
-	// ctx = baggage.ContextWithMap(ctx, baggage.NewMap(baggage.MapUpdate{
-	// 	MultiKV: entries,
-	// }))
+	// // ctx = baggage.ContextWithMap(ctx, baggage.NewMap(baggage.MapUpdate{
+	// // 	MultiKV: entries,
+	// // }))
 
-	if spanCtx.IsValid() {
-		log.Debug("span is valid")
-		ctx = trace.ContextWithRemoteSpanContext(ctx, spanCtx)
-	} else {
-		log.Debug("span is invalid")
-	}
+	// if spanCtx.IsValid() {
+	// 	log.Debug("span is valid")
+	// 	ctx = trace.ContextWithRemoteSpanContext(ctx, spanCtx)
+	// } else {
+	// 	log.Debug("span is invalid")
+	// }
 
-	// Start the server-side span, passing the remote
-	// child span context explicitly.
-	_, span := tracer.Start(
-		ctx,
-		"hello",
-		//trace.WithAttributes(attrs...),
-	)
+	time.Sleep(50 * time.Millisecond)
+
+	span := trace.SpanFromContext(ctx)
 	defer span.End()
 
-	log.Debug("say hello is called")
+	label2 := label.KeyValue{
+		Key:   label.Key("key_aa"),
+		Value: label.StringValue("value_aa"),
+	}
+	evt := trace.WithAttributes(label2)
+
+	span.AddEvent("myEvent", evt)
+
 	return &proto.HelloReply{Message: "Hello " + in.Name}, nil
 }
