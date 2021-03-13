@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jasonsoft/learning-opentelemetry/grpc/proto"
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/jasonsoft/log/v2"
@@ -45,9 +45,9 @@ func (s *Server) SayHello(ctx context.Context, in *proto.HelloRequest) (*proto.H
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 
-	label2 := label.KeyValue{
-		Key:   label.Key("key_aa"),
-		Value: label.StringValue("value_aa"),
+	label2 := attribute.KeyValue{
+		Key:   attribute.Key("key_aa"),
+		Value: attribute.StringValue("value_aa"),
 	}
 	evt := trace.WithAttributes(label2)
 

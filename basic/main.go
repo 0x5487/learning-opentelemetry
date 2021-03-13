@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/label"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -36,9 +36,9 @@ func initTracer() func() {
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "trace-demo",
-			Tags: []label.KeyValue{
-				label.String("exporter", "jaeger"),
-				label.Float64("float", 312.23),
+			Tags: []attribute.KeyValue{
+				attribute.String("exporter", "jaeger"),
+				attribute.Float64("float", 312.23),
 			},
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
@@ -61,15 +61,15 @@ func main() {
 	tr := otel.Tracer("component-main")
 	ctx, span := tr.Start(ctx, "foo")
 
-	label1 := label.KeyValue{
-		Key:   label.Key("request_id"),
-		Value: label.StringValue("abc"),
+	label1 := attribute.KeyValue{
+		Key:   attribute.Key("request_id"),
+		Value: attribute.StringValue("abc"),
 	}
 	span.SetAttributes(label1)
 
-	label2 := label.KeyValue{
-		Key:   label.Key("key_aa"),
-		Value: label.StringValue("value_aa"),
+	label2 := attribute.KeyValue{
+		Key:   attribute.Key("key_aa"),
+		Value: attribute.StringValue("value_aa"),
 	}
 	evt := trace.WithAttributes(label2)
 

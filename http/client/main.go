@@ -16,8 +16,8 @@ import (
 	"go.opentelemetry.io/otel/semconv"
 	"go.opentelemetry.io/otel/trace"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/label"
 
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
@@ -29,8 +29,8 @@ func initTracer() func() {
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "http-client",
-			Tags: []label.KeyValue{
-				label.String("version", "1.0"),
+			Tags: []attribute.KeyValue{
+				attribute.String("version", "1.0"),
 			},
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
@@ -52,7 +52,7 @@ func main() {
 	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	ctx := baggage.ContextWithValues(context.Background(),
-		label.String("username", "donuts"),
+		attribute.String("username", "donuts"),
 	)
 
 	tr := otel.Tracer("example/client")
@@ -69,9 +69,9 @@ func main() {
 	_, err = ioutil.ReadAll(res.Body)
 	_ = res.Body.Close()
 
-	label1 := label.KeyValue{
-		Key:   label.Key("request_id"),
-		Value: label.StringValue("abc"),
+	label1 := attribute.KeyValue{
+		Key:   attribute.Key("request_id"),
+		Value: attribute.StringValue("abc"),
 	}
 	span.SetAttributes(label1)
 	span.SetStatus(codes.Ok, "OK")
