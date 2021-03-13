@@ -10,6 +10,12 @@ services:
       - "14250"
 
 
+networks:
+  default:
+    external:
+      name: dev-network
+
+
 
 
 
