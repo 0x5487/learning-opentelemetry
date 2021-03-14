@@ -21,7 +21,7 @@ import (
 func initTracer() func() {
 	// Create and install Jaeger export pipeline
 	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
+		jaeger.WithCollectorEndpoint("http://jaeger-all-in-one:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "http-server",
 			Tags: []attribute.KeyValue{
