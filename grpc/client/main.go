@@ -8,12 +8,14 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/semconv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
 	helloworldProto "github.com/jasonsoft/learning-opentelemetry/grpc/proto"
 	"github.com/jasonsoft/log/v2"
 	"github.com/jasonsoft/log/v2/handlers/console"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -26,13 +28,14 @@ func initTracer() func() {
 	// Create and install Jaeger export pipeline
 	flush, err := jaeger.InstallNewPipeline(
 		jaeger.WithCollectorEndpoint("http://jaeger-all-in-one:14268/api/traces"),
-		jaeger.WithProcess(jaeger.Process{
-			ServiceName: "grpc-client",
-			Tags: []attribute.KeyValue{
-				attribute.String("version", "1.0"),
-			},
-		}),
-		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
+		jaeger.WithSDKOptions(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithResource(resource.NewWithAttributes(
+				semconv.ServiceNameKey.String("grpc-client"),
+				attribute.String("exporter", "jaeger"),
+				attribute.Float64("float", 312.23),
+			)),
+		),
 	)
 	if err != nil {
 		panic(err)

@@ -25,7 +25,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -34,14 +36,14 @@ func initTracer() func() {
 	// Create and install Jaeger export pipeline
 	flush, err := jaeger.InstallNewPipeline(
 		jaeger.WithCollectorEndpoint("http://jaeger-all-in-one:14268/api/traces"),
-		jaeger.WithProcess(jaeger.Process{
-			ServiceName: "trace-demo",
-			Tags: []attribute.KeyValue{
+		jaeger.WithSDKOptions(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithResource(resource.NewWithAttributes(
+				semconv.ServiceNameKey.String("trace-demo"),
 				attribute.String("exporter", "jaeger"),
 				attribute.Float64("float", 312.23),
-			},
-		}),
-		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
+			)),
+		),
 	)
 	if err != nil {
 		log.Fatal(err)
