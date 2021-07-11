@@ -1,16 +1,16 @@
-module github.com/jasonsoft/learning-opentelemetry
+module github.com/0x5487/learning-opentelemetry
 
-go 1.15
+go 1.14
 
 require (
-	github.com/golang/protobuf v1.5.1
-	github.com/jasonsoft/log/v2 v2.0.0-beta.4
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.19.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.19.0
-	go.opentelemetry.io/otel v0.19.0
-	go.opentelemetry.io/otel/exporters/trace/jaeger v0.19.0
-	go.opentelemetry.io/otel/sdk v0.19.0
-	go.opentelemetry.io/otel/trace v0.19.0
-	golang.org/x/net v0.0.0-20210326220855-61e056675ecf
-	google.golang.org/grpc v1.36.1
+	github.com/golang/protobuf v1.5.2
+	github.com/nite-coder/blackbear v0.0.0-20210710135651-97a27fc0a4df
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.21.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
+	go.opentelemetry.io/otel v1.0.0-RC1
+	go.opentelemetry.io/otel/exporters/jaeger v1.0.0-RC1
+	go.opentelemetry.io/otel/sdk v1.0.0-RC1
+	go.opentelemetry.io/otel/trace v1.0.0-RC1
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	google.golang.org/grpc v1.39.0
 )

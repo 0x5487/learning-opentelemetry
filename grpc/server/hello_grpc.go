@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/jasonsoft/learning-opentelemetry/grpc/proto"
+	"github.com/0x5487/learning-opentelemetry/grpc/proto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/jasonsoft/log/v2"
+	"github.com/nite-coder/blackbear/pkg/log"
 )
 
 type Server struct{}

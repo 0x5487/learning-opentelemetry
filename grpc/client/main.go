@@ -2,58 +2,83 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
-	helloworldProto "github.com/jasonsoft/learning-opentelemetry/grpc/proto"
-	"github.com/jasonsoft/log/v2"
-	"github.com/jasonsoft/log/v2/handlers/console"
+	helloworldProto "github.com/0x5487/learning-opentelemetry/grpc/proto"
+	"github.com/nite-coder/blackbear/pkg/log"
+	"github.com/nite-coder/blackbear/pkg/log/handler/console"
 	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 const (
-	address = "localhost:10051"
+	service     = "grpc-client"
+	environment = "production"
+	id          = 1
+	address     = "localhost:10051"
 )
 
-// initTracer creates a new trace provider instance and registers it as global trace provider.
-func initTracer() func() {
-	// Create and install Jaeger export pipeline
-	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://jaeger-all-in-one:14268/api/traces"),
-		jaeger.WithSDKOptions(
-			sdktrace.WithSampler(sdktrace.AlwaysSample()),
-			sdktrace.WithResource(resource.NewWithAttributes(
-				semconv.ServiceNameKey.String("grpc-client"),
-				attribute.String("exporter", "jaeger"),
-				attribute.Float64("float", 312.23),
-			)),
-		),
-	)
+// tracerProvider returns an OpenTelemetry TracerProvider configured to use
+// the Jaeger exporter that will send spans to the provided url. The returned
+// TracerProvider will also use a Resource configured with all the information
+// about the application.
+func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in an Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(service),
+			attribute.String("environment", environment),
+			attribute.Int64("ID", id),
+		)),
+	)
+
+	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-	return func() {
-		flush()
-	}
+	return tp, nil
 }
 
 func main() {
 	clog := console.New()
 	log.AddHandler(clog, log.AllLevels...)
 
-	fn := initTracer()
-	defer fn()
+	tp, err := tracerProvider("http://jaeger-all-in-one:14268/api/traces")
+	if err != nil {
+		log.Err(err).Panicf("get trace provider failed")
+	}
 
-	//tracer := global.Tracer("client-tracer")
+	// Register our TracerProvider as the global so any imported
+	// instrumentation in the future will default to using it.
+	otel.SetTracerProvider(tp)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Cleanly shutdown and flush telemetry when the application exits.
+	defer func(ctx context.Context) {
+		// Do not make the application hang when it is shutdown.
+		ctx, cancel = context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := tp.Shutdown(ctx); err != nil {
+			log.Err(err).Panicf("get trace provider failed")
+		}
+	}(ctx)
 
 	conn, err := grpc.Dial(address,
 		grpc.WithInsecure(),
@@ -75,7 +100,7 @@ func main() {
 
 	// Contact the server and print out its response.
 	name := "jason"
-	r, err := c.SayHello(context.Background(), &helloworldProto.HelloRequest{Name: name})
+	r, err := c.SayHello(ctx, &helloworldProto.HelloRequest{Name: name})
 	if err != nil {
 		log.Error(err.Error())
 		return
