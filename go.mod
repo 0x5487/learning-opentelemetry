@@ -11,6 +11,6 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0-RC1
 	go.opentelemetry.io/otel/sdk v1.0.0-RC1
 	go.opentelemetry.io/otel/trace v1.0.0-RC1
-	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	golang.org/x/net v0.7.0
 	google.golang.org/grpc v1.39.0
 )
