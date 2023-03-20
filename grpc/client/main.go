@@ -55,8 +55,13 @@ func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
 }
 
 func main() {
-	clog := console.New()
-	log.AddHandler(clog, log.AllLevels...)
+	logger := log.New()
+	consoleOpts := console.ConsoleOptions{
+		DisableColor: false,
+	}
+	clog := console.New(consoleOpts)
+	logger.AddHandler(clog, log.AllLevels...)
+	log.SetLogger(logger)
 
 	tp, err := tracerProvider("http://jaeger-all-in-one:14268/api/traces")
 	if err != nil {

@@ -19,12 +19,14 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -61,8 +63,40 @@ func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
 	return tp, nil
 }
 
+// newExporter returns a console exporter.
+func newConsoleExporter() (*tracesdk.TracerProvider, error) {
+	exp, err := stdouttrace.New(
+		stdouttrace.WithWriter(os.Stdout),
+		// Use human-readable output.
+		stdouttrace.WithPrettyPrint(),
+		// Do not print timestamps for the demo.
+		stdouttrace.WithoutTimestamps(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in an Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(service),
+			attribute.String("environment", environment),
+			attribute.Int64("ID", id),
+		)),
+	)
+	return tp, nil
+}
+
 func main() {
-	tp, err := tracerProvider("http://jaeger-all-in-one:14268/api/traces")
+	// tp, err := tracerProvider("http://jaeger-all-in-one:14268/api/traces")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	tp, err := newConsoleExporter()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,9 +147,9 @@ func main() {
 
 func bar(ctx context.Context) {
 	tr := otel.Tracer("component-bar")
-	_, span := tr.Start(ctx, "bar")
+	_, span := tr.Start(ctx, "bar12")
 	defer span.End()
 
 	// Do bar...
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 }
